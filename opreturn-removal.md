@@ -21,16 +21,35 @@ Who are you?
 
 <!-- end_slide -->
 
+Why are we here?
+================
+
+<!-- pause -->
+
+Bitcoin Core v30 increased the `-datacarriersize` to 100,000 by default, which effectively uncaps the limit (as the maximum transaction size limit will be hit first).
+
+<!-- pause -->
+<!-- jump_to_middle -->
+<!-- alignment: right -->
+
+However, removing it has been controversial.
+
+<!-- end_slide -->
+
 Things we'll cover
 ==================
 
 - The mempool, who decides what goes into it, and how that works
 - Transaction relay and how transactions are filtered
-- Block size vs block weight
 - Bitcoin Script
 - What `OP_RETURN` is
-- Reasons for removing `OP_RETURN` limits
-- Reasons for keeping `OP_RETURN` limits
+- Reasons for removing `OP_RETURN` limit
+- Reasons for keeping `OP_RETURN` limit
+- What you can do about it
+
+<!-- speaker_note: |
+  Make sure to check in after the slide to check everyone's familiarity with any of these topics
+-->
 
 <!-- end_slide -->
 
@@ -39,7 +58,8 @@ Things we won't cover
 
 - Core vs Knots
 - JPEGs on the blockchain
-- Mining centralization
+- Dramatic tweets
+- Ideology
 - **My own opinion**
 
 <!-- end_slide -->
@@ -56,7 +76,7 @@ This is not the mempool.
 
 <!-- end_slide -->
 
-The Mempool
+A Mempool
 ===========
 
 <!-- column_layout: [1,1] -->
@@ -73,8 +93,9 @@ The Mempool
 - A cache of valid bitcoin transactions that have been broadcast to the network but have yet to be confirmed in a block
 - Every node has its own mempool
 - Transactions are sent from node to node until all nodes' mempools contain the transaction
-- This includes miners, who also run a node with its own mempool from which they build blocks
+- This includes miners, who also run a node with their own mempools from which they build blocks
 - A node will receive a new block, validate it, and then remove any transactions from its mempool that are included in the block
+- It's like a waiting room for transactions, just waiting to be seen by the **block-tor**
 
 <!--
 speaker_note: |
@@ -97,27 +118,12 @@ Transaction relay
 # What are filters?
 
 - User-controlled rules for determining if a transaction should be added to the local mempool
-- Bitcoin core ships with a set of default filters
+- Bitcoin Core ships with a set of default filters
 - Examples
   - Minimium fee rate
   - Replace-by-fee
   - Dust limit
-  - `OP_RETURN` limit
-
-<!-- end_slide -->
-
-
-Block size vs block weight
-==========================
-
-- Block size is the size of the block data on disk
-- Block weight is a metric for determining how much data can fit into a block
-- Prior to Segwit, block size was used and capped at 1MB
-- With the introduction of Segwit (BIP141), blocks are measured in weight units with a max of 4 million weight units per block
-- Block weight is defined as Base size * 3 + Total size
-  - Base size is the block size in bytes with the original transaction serialization without any witness-related data, as seen by a non-upgraded node.
-  - Total size is the block size in bytes with transactions serialized as described in BIP144, including base data and witness data.
-- Under this system, the signature data within a transaction receives a “discount,” making it less costly compared to other types of transaction data. This means that signature data doesn’t "weigh" as much in a block.
+  - Data carrier size
 
 <!-- end_slide -->
 
@@ -131,16 +137,21 @@ Bitcoin Script
 - These op codes are well defined and limited to a small set of operations
 - One of the well-known op codes is `OP_RETURN`
 
-**Important note: scripts are limited to a max of 10,000 bytes**
-
 <!-- end_slide -->
 
 What is OP_RETURN?
 =================
 
 - A Bitcoin Script op code that can be used to store data inside transactions
-- Immediately ends the execution of the script and marks it as invalid, making the output provably unspendable
+- Immediately ends the execution of the script and marks it as invalid, making the output **provably unspendable**
 - Also used to refer to a standard script pattern used for storing arbitrary data inside transactions
+
+<!-- speaker_note:
+  - Provably unspendable is the key word
+  - To keep nodes running performantly, we want to minimize what it has to keep track of
+    - This includes the UTXO set
+  - Since these are provably unspendable, we can validate them and then forget about them
+-->
 
 <!-- pause -->
 
@@ -149,6 +160,7 @@ OP_RETURN
 OP_PUSHBYTES_11
 68656c6c6f20776f726c64
 ```
+
 <!-- speaker_note: |
 - hex is "hello world"
 -->
@@ -202,125 +214,111 @@ What's the controversy?
 
 # How it was
 
-- Bitcoin Core originally introduced a standard locking script as a compromise to allow people to include arbitrary data inside transactions
+- Bitcoin Core originally introduced a locking script as a compromise to allow people to include arbitrary data inside transactions
 - This signaled that the UTXO was unspendable
 - The limit was set at 80 bytes
-- Bitcoin Core v0.9.0 reduced this to 40 bytes
-- Bitcoin Core v0.11.0 raised the limit to 80 bytes
+- Bitcoin Core v0.9.0 reduced this to 40 bytes and made this script standard
+- Bitcoin Core v0.11.0 raised the limit to 80 bytes and added the `datacarriersize` flag
+- Historically, Bitcoin Core’s 80-byte limit was seen as a compromise: large enough to store hashes and protocol identifiers, small enough to reduce the risk of abuse.
+
+<!-- speaker_note: |
+  The main difference between standard and non-standard is whether the transaction is relayed by default or not.
+-->
 
 <!-- pause -->
 
 ## How it is now
 
-- Bitcoin Core v30 removed the limit entirely
+- Bitcoin Core v30 raised the limit to 100,000, effectively removing the limit entirely
 - This means the limit is no longer set by a relay policy and instead is restricted purely by consensus rules
 
 <!-- speaker_note: |
-  Less than 10,000 bytes per script
+  Less than 100,000 bytes per script
   Less than 4MB per block
 -->
 
 <!-- end_slide -->
 
-Reasoning for removal
-=====================================
+Reasoning for removing the limit
+================================
 
 <!-- pause -->
 
-# Many legitimate use cases (like Merkle root proofs, cross-chain commits, or compact binary metadata) exceed 80 bytes
+- Many legitimate use cases (like Merkle root proofs, cross-chain commits, or compact binary metadata) exceed 80 bytes
 
-- Projects must split data across multiple transactions or compress data, adding unnecessary complexity.
-- Example: OpenTimestamps has to pack large Merkle roots carefully to stay under 80 bytes.
+<!-- speaker_note:
+  - Projects must split data across multiple transactions or compress data, adding unnecessary complexity.
+  - Example: OpenTimestamps has to pack large Merkle roots carefully to stay under 80 bytes.
+ -->
 
 <!-- pause -->
 
-# The OP_RETURN limit is a relay and mining policy, not a consensus rule
+- The OP_RETURN limit is a relay policy, not a consensus rule
 
-- This distinction confuses developers — a transaction can be valid but still non-standard and therefore not relayed or mined by default nodes.
-- Leads to frustration for app developers who find their valid transactions ignored by the network.
+<!-- speaker_note:
+  Confused devs - transaction can be valid but still non-standard and therefore not relayed or mined by default nodes.
+-->
+
+<!-- pause -->
+
+- Critics argue the 80-byte cap doesn't meaningfully reduce "spam"
+
+<!-- speaker_note:
+  - One of the original justifications for limiting OP_RETURN was to prevent “blockchain spam” — users storing arbitrary files or text on-chain.
+  - However, it just pushes people toward worse methods (like fake multisig outputs) to store data.
+  - The limit doesn't prevent abuse; it only penalizes legitimate structured use cases.
+-->
+
+<!-- pause -->
+
+- Some miners and relay nodes profit from accepting high-fee, large OP_RETURN data transactions
+
+<!-- speaker_note:
+  - Creates policy fragmentation and unpredictable mempool behavior.
+  - Reinforces centralization pressure since large miners can selectively mine “non-standard” payloads.
+  - Hurts block validation performance and increases network overhead
+    - If a transaction isn't in your mempool and it's added to a block, you now need to ask for it from peers to validate the whole block
+-->
 
 <!-- end_slide -->
 
-Reasoning for removal
-=====================================
-
-# Because the limit is a policy, miners can override it - some allow larger payloads, others don’t
-
-- Creates inconsistent propagation behavior.
-- Developers can’t rely on uniform handling across the network.
+Reasons for keeping the limit
+=============================
 
 <!-- pause -->
 
-# Critics argue the 80-byte cap doesn’t meaningfully reduce spam
+- Storing arbitrary data directly in Bitcoin blocks consumes space permanently
 
-- One of the original justifications for limiting OP_RETURN was to prevent “blockchain spam” — users storing arbitrary files or text on-chain.
-- However, it just pushes people toward worse methods (like fake multisig outputs) to store data.
-- The limit doesn’t prevent abuse; it only penalizes legitimate structured use cases.
-
-<!-- end_slide -->
-
-Reasoning for removal
-=====================================
-
-# Some miners and relay nodes profit from accepting high-fee, large OP_RETURN data transactions (e.g., Ordinals, inscriptions), while others see them as spam
-
-- Creates policy fragmentation and unpredictable mempool behavior.
-- Reinforces centralization pressure since large miners can selectively mine “non-standard” payloads.
-
-<!-- end_slide -->
-
-Reasons for keeping
-===================
+<!-- speaker_note:
+  - Large or unlimited OP_RETURN outputs could significantly increase blockchain size, making full nodes heavier to run.
+  - The blockchain is forever
+-->
 
 <!-- pause -->
 
-# Storing arbitrary data directly in Bitcoin blocks consumes space permanently
+- Without a limit, anyone could flood the network with huge OP_RETURN outputs
 
-- Large or unlimited OP_RETURN outputs could significantly increase blockchain size, making full nodes heavier to run.
-
-<!-- pause -->
-
-# Without a limit, anyone could flood the network with huge OP_RETURN outputs
-
-- Even if consensus allows it, the mempool could become clogged with low-fee “data spam” transactions.
-
-<!-- end_slide -->
-
-Reasons for keeping
-===================
-
-# While OP_RETURN outputs are provably unspendable (don’t increase UTXO growth), very large outputs still contribute to transaction size and affect block propagation times
-
-- Keeping a limit avoids excessive bandwidth and memory overhead in validating and relaying blocks.
+<!-- speaker_note:
+  - The mempool could become clogged with low-fee “data spam” transactions.
+-->
 
 <!-- pause -->
 
-# Large OP_RETURN outputs increase transaction weight, so keeping them small helps prevent fee market distortion
+- While OP_RETURN outputs are provably unspendable, very large outputs still contribute to transaction size and affect block propagation times
 
-- If users could include megabytes of data for small fees, this might interfere with normal payments and smart fee estimation.
-
-<!-- end_slide -->
-
-Reasons for keeping
-===================
-
-# A size limit forces developers to use compact, structured, and binary encodings rather than bloated ASCII strings or redundant data
+<!-- speaker_note:
+  - Goes with the previous bullet point as well
+  - Keeping a limit avoids excessive bandwidth and memory overhead in validating and relaying blocks.
+ -->
 
 <!-- pause -->
 
-# Keeping a standard limit reduces the variance between nodes and miners
+- A size limit forces developers to use compact, structured, and binary encodings rather than bloated ASCII strings or redundant data
 
-- Without a default limit, some miners might accept arbitrarily large OP_RETURNs while others reject them, creating non-standard transaction propagation issues.
-
-<!-- pause -->
-
-# By limiting OP_RETURN size, developers and miners retained some control over how the blockchain could be used for arbitrary data, balancing between utility and keeping Bitcoin focused on payments and financial settlement
-
-<!-- end_slide -->
-
-<!-- jump_to_middle -->
-
-Historically, Bitcoin Core’s 80-byte limit was seen as a compromise: large enough to store hashes and protocol identifiers, small enough to reduce the risk of abuse.
+<!-- speaker_note:
+  - This encourages better design practices and more efficient data storage
+  - It pushes developers to think about data structure and compression, leading to more efficient use of the blockchain
+-->
 
 <!-- end_slide -->
 
