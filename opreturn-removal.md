@@ -39,6 +39,8 @@ However, removing it has been controversial.
 Things we'll cover
 ==================
 
+<!-- list_item_newlines: 2 -->
+
 - The mempool, who decides what goes into it, and how that works
 - Transaction relay and how transactions are filtered
 - Bitcoin Script
@@ -56,11 +58,17 @@ Things we'll cover
 Things we won't cover
 ====================
 
+<!-- list_item_newlines: 2 -->
+
 - Core vs Knots
 - JPEGs on the blockchain
 - Dramatic tweets
 - Ideology
 - **My own opinion**
+
+<!-- speaker_note: |
+  Make sure to check in after the slide to check everyone's familiarity with any of these topics
+-->
 
 <!-- end_slide -->
 
@@ -95,7 +103,7 @@ A Mempool
 - Transactions are sent from node to node until all nodes' mempools contain the transaction
 - This includes miners, who also run a node with their own mempools from which they build blocks
 - A node will receive a new block, validate it, and then remove any transactions from its mempool that are included in the block
-- It's like a waiting room for transactions, just waiting to be seen by the **block-tor**
+- It's like a waiting room for transactions, just waiting to be seen in a block
 
 <!--
 speaker_note: |
@@ -129,6 +137,8 @@ Transaction relay
 
 Bitcoin Script
 ==============
+
+<!-- list_item_newlines: 2 -->
 
 - A simple, stack-based scripting system for defining the conditions under which a transaction output can be spent
 - Used in the ScriptPubKey and ScriptSig of a transaction
@@ -242,83 +252,73 @@ What's the controversy?
 Reasoning for removing the limit
 ================================
 
+<!-- list_item_newlines: 4 -->
 <!-- pause -->
 
 - Many legitimate use cases (like Merkle root proofs, cross-chain commits, or compact binary metadata) exceed 80 bytes
 
-<!-- speaker_note:
+<!-- speaker_note: |
   - Projects must split data across multiple transactions or compress data, adding unnecessary complexity.
   - Example: OpenTimestamps has to pack large Merkle roots carefully to stay under 80 bytes.
+
+  - Confused devs - transaction can be valid but still non-standard and therefore not relayed or mined by default nodes.
+
+  - One of the original justifications for limiting OP_RETURN was to prevent “blockchain spam” — users storing arbitrary files or text on-chain.
+  - However, it just pushes people toward worse methods (like fake multisig outputs) to store data.
+  - The limit doesn't prevent abuse; it only penalizes legitimate structured use cases.
+
+  - Creates policy fragmentation and unpredictable mempool behavior.
+  - Reinforces centralization pressure since large miners can selectively mine “non-standard” payloads.
+  - Hurts block validation performance and increases network overhead
+    - If a transaction isn't in your mempool and it's added to a block, you now need to ask for it from peers to validate the whole block
  -->
 
 <!-- pause -->
 
 - The OP_RETURN limit is a relay policy, not a consensus rule
 
-<!-- speaker_note:
-  Confused devs - transaction can be valid but still non-standard and therefore not relayed or mined by default nodes.
--->
-
 <!-- pause -->
 
 - Critics argue the 80-byte cap doesn't meaningfully reduce "spam"
 
-<!-- speaker_note:
-  - One of the original justifications for limiting OP_RETURN was to prevent “blockchain spam” — users storing arbitrary files or text on-chain.
-  - However, it just pushes people toward worse methods (like fake multisig outputs) to store data.
-  - The limit doesn't prevent abuse; it only penalizes legitimate structured use cases.
--->
-
 <!-- pause -->
 
 - Some miners and relay nodes profit from accepting high-fee, large OP_RETURN data transactions
-
-<!-- speaker_note:
-  - Creates policy fragmentation and unpredictable mempool behavior.
-  - Reinforces centralization pressure since large miners can selectively mine “non-standard” payloads.
-  - Hurts block validation performance and increases network overhead
-    - If a transaction isn't in your mempool and it's added to a block, you now need to ask for it from peers to validate the whole block
--->
 
 <!-- end_slide -->
 
 Reasons for keeping the limit
 =============================
 
+<!-- list_item_newlines: 4 -->
 <!-- pause -->
 
 - Storing arbitrary data directly in Bitcoin blocks consumes space permanently
 
-<!-- speaker_note:
+<!-- speaker_note: |
   - Large or unlimited OP_RETURN outputs could significantly increase blockchain size, making full nodes heavier to run.
   - The blockchain is forever
+
+  - The mempool could become clogged with low-fee “data spam” transactions.
+
+  - Goes with the previous bullet point as well
+  - Keeping a limit avoids excessive bandwidth and memory overhead in validating and relaying blocks.
+
+  - This encourages better design practices and more efficient data storage
+  - It pushes developers to think about data structure and compression, leading to more efficient use of the blockchain
 -->
 
 <!-- pause -->
 
 - Without a limit, anyone could flood the network with huge OP_RETURN outputs
 
-<!-- speaker_note:
-  - The mempool could become clogged with low-fee “data spam” transactions.
--->
-
 <!-- pause -->
 
 - While OP_RETURN outputs are provably unspendable, very large outputs still contribute to transaction size and affect block propagation times
 
-<!-- speaker_note:
-  - Goes with the previous bullet point as well
-  - Keeping a limit avoids excessive bandwidth and memory overhead in validating and relaying blocks.
- -->
-
 <!-- pause -->
 
 - A size limit forces developers to use compact, structured, and binary encodings rather than bloated ASCII strings or redundant data
-
-<!-- speaker_note:
-  - This encourages better design practices and more efficient data storage
-  - It pushes developers to think about data structure and compression, leading to more efficient use of the blockchain
--->
 
 <!-- end_slide -->
 
@@ -330,7 +330,7 @@ Reasons for keeping the limit
 <!-- end_slide -->
 
 <!-- new_lines: 8 -->
-<!-- list_item_newlines: 3 -->
+<!-- list_item_newlines: 4 -->
 
 - Don't upgrade to Core v30
 
