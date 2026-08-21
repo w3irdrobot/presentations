@@ -1,97 +1,145 @@
 # Silent Payments
 
-A presentation about Silent Payments, the how and why it exists, pros and cons, and the current state in the Bitocin ecosystem.
+A 30-minute technical presentation about Silent Payments for an audience that is mostly not technical. The talk emphasizes how the protocol works without requiring the audience to follow elliptic-curve arithmetic. Exact formulas are retained in speaker notes and the appendix.
 
 ## Slides
 
-- Title
-- Basic outline
-- What is Silent Payments?
-  - Defined in BIP-352
-  - "a protocol for static payment addresses in Bitcoin without on-chain linkability of payments or a need for on-chain notifications"
-  - Show an example of what an SP address looks like
-  - sp1qqd7h3mht4zhkd780tf2wnlq3cqudw5nzq955ghjvfq3fxrxx4xtacqe7prvtsxvn4t6n3lzzntqxj35xsvpzfl76kuza3nwnkt5hg72cl5tjxtue
-- ...but why?
-- Standard addresses
-  - P2PK/P2PKH/P2SH/P2WPKH/Taproot
-  - Considered standard and supported in Bitcoin Core
-  - Talk about privacy issues and the requirement to get new addresses per transaction from a wallet
-  - Getting new addresses requires an always-online server if asynchronous
-- BIP-63 (Stealth Addresses)
-  - using a set of keys combined into one long payment code to allow senders to generate unique addresses for the recipient and leveraging the OP_RETURN
-  - relied on a large OP_RETURN field (something that was reduced shortly after it was proposed) and made every payment utilizing stealth addresses stand out on-chain
-- BIP-47 (Reusable Payment Codes)
-  - "a technique for creating a payment code which can be publicly advertised and associated with a real-life identity without creating the loss of security or privacy inherent to P2PKH address reuse"
-  - Sender makes a special notification transaction. After that, both parties can independently derive a sequence of private payment addresses.
-  - The sender establishes the relationship by sending a notification transaction to a public notification address derived from the recipient's payment code.
-- BIP-351 (Private Payments)
-  - Makes it possible for two parties to transact using addresses that only they can calculate.
-  - This is done using exclusively on-chain methods and in a manner that minimizes blockchain footprint.
-  - The sender establishes it by publishing a sender-specific public key plus an ECDH-derived identifier in an OP_RETURN, which the recipient recognizes by scanning.
-  - Speaker note: The motivation for BIP 351 is largely that BIP 47's fixed notification address is a privacy weakness: multiple people establishing relationships with the same recipient can be associated with that common notification address. BIP 351 removes that common on-chain anchor.
-- What makes Silent Payments different?
-  - Instead of there being an on-chain footprint, a sender is able to create addresses on the fly based on transaction data and data retrieved from the receiver's SP address
-  - The receiver then scans all transactions for these derived UTXO addresses and calculate if it was sent to them
-  - Speaker notes: We'll go through the process of creating and finding these transactions next.
-- Silent Payments Keys
-  - SP utilizes two keys instead of many derived keys from a root key
-  - They are called the scan key and the spend key
-  - This is done to allow one private key (the scan key) to be kept hot while the other is kept cold
-  - Both are needed to spend UTXOs to the SP address
-- Silent Payments Address
-  - A bech32m-encoded concatenation of the SEC1 compressed form of the scan public key and the SEC1 compressed form of B_m with an HRP of sp and a version of 0 (represented as q)
-  - B_m = B_spend + hash_BIP0352/Label(ser_256(b_scan) || ser32(m))·G, where hash_BIP0352/Label(ser)256(bscan) || ser_32(m))·G is an optional integer tweak for labeling
-    - B_m is the tweaked spend public key or just the public key if no tweak
-  - sp1qqd7h3mht4zhkd780tf2wnlq3cqudw5nzq955ghjvfq3fxrxx4xtacqe7prvtsxvn4t6n3lzzntqxj35xsvpzfl76kuza3nwnkt5hg72cl5tjxtue
-  - scan_private_key: m / purpose' / coin_type' / account' / 1' / 0
-  - spend_private_key: m / purpose' / coin_type' / account' / 0' / 0
-- Sending to a Silent Payments address
-  - Speaker notes: I'll keep this somewhat high level for brevity's sake
-  - Select the inputs for the transaction and collect the private keys for each as a_i
-  - Speaker note: Private keys are just really big numbers
-  - Add the private keys together to get another private key a = a_1 + a_2 + a_3 + ...
-  - Hash using tagged hashing the concatenation of the smallest outpoint lexicographically and the public key of a called A to get the input hash
-  - Group receiver SP addresses the scan public key B_scan
-  - For each group
-    - let ecdh_shared_secret = input_hash * a * B_scan
-    - let k = 0
-    - For each B_m in the group
-      - Let t_k = hash_BIP0352/SharedSecret(ser_P(ecdh_shared_secret) || ser_32(k))
-      - Let P_mn = B_m + t_k·G
-      - Encode P_mn as a BIP341 taproot output
-      - Optionally, repeat with k++ to create additional outputs for the current B_m
-      - If no additional outputs are required, continue to the next B_m with k++
-- Receiving (Scanning)
-  - let A = A_1 + A_2 + A_3 + ... where A_i is a public key of a valid input
-  - input_hash = hash_BIP0352/Inputs(outpoint_L || A) where outpoint_L the smallest outpoint lexicographically
-  - let ecdh_shared_secret = input_hash * b_scan * A
-  - Check all outputs keys from all Taproot outputs in the transaction
-    - Starting with k = 0
-      - If k == 2323, stop
-      - Let t_k = hash_BIP0352/SharedSecret(ser_P(ecdh_shared_secret) || ser_32(k))
-      - P_k = B_spend + t_k·G
-      - For each output to check
-        - If P_k is the output
-          - Add it to our wallet
-          - Remove it from the outputs to check and rescan with k++
-        - Check for labels
-          - Compute label = output - P_k
-          - Check if label exists in the list of labels used by the wallet
-          - If a match is found:
-            - Add P_k + label to the wallet
-            - Remove output from outputs_to_check and rescan outputs_to_check with k++
-          - If a label is not found, negate output and check a second time[22]
-      - If no matches are found, stop[23]
-- Spending
-  - Let d = (b_spend + t_k + hash_BIP0352/Label(ser_256(b_scan) || ser_32(m))) mod n, where hash_BIP0352/Label(ser_256(b_scan) || ser_32(m)) is the optional label
-  - Spend the BIP341 output with the private key d
-- Pros
-  -
-- Current state
+- Silent Payments
+  - A reusable Bitcoin address without reusable on-chain addresses
+- The problem: receive now, stay private later
+  - Reusing a normal Bitcoin address links its payments on-chain
+  - Requesting a fresh address preserves privacy but requires interaction or an online server
+  - Example: a public donation address must be available while the recipient may be offline
+- What Silent Payments promise
+  - Defined in BIP 352: "a protocol for static payment addresses in Bitcoin without on-chain linkability of payments or a need for on-chain notifications"
+  - Publish one address
+  - Every payment lands at a different Taproot output
+  - No notification transaction and no extra transaction data
+- What the address contains
+  - Version 0 mainnet addresses begin with `sp1q`
+  - Bech32m encoding of two compressed public keys: the scan key and spend key
+  - Example address
+  - `sp1qqd7h3mht4zhkd780tf2wnlq3cqudw5nzq955ghjvfq3fxrxx4xtacqe7prvtsxvn4t6n3lzzntqxj35xsvpzfl76kuza3nwnkt5hg72cl5tjxtue`
+  - Speaker notes: The address is 116 characters on mainnet and is not itself used as an output script.
+- Earlier reusable-payment approaches
+  - BIP 63 stealth addresses used an `OP_RETURN` notification and were conspicuous on-chain
+  - BIP 47 reusable payment codes use an initial notification transaction to establish a relationship
+  - BIP 351 private payments replace BIP 47's shared notification address with sender-specific notification data, but still leave a notification footprint
+  - Silent Payments derive the notification from data already present in the spending transaction
+  - Speaker notes: Keep this historical comparison brief. It exists to show why removing the notification is important.
+- The core trick: both sides find the same secret
+  - Alice combines a private input key with Bob's public scan key
+  - Bob combines his private scan key with Alice's public input key
+  - Elliptic-curve Diffie-Hellman makes both calculations produce the same shared secret
+  - Anyone watching has only public keys and cannot calculate it
+  - Speaker notes: This is the cryptographic hinge of the protocol. Explain the symmetry, not the curve arithmetic.
+- Why transaction inputs matter
+  - The sender derives the payment from keys belonging to the transaction's inputs
+  - Supported input types for derivation: P2TR, P2WPKH, P2SH-P2WPKH, and P2PKH
+  - Inputs whose usable public key cannot be determined are ignored for derivation
+  - At least one eligible input is required
+- Multiple inputs become one identity
+  - The sender adds all eligible private input keys
+  - The receiver adds the corresponding public input keys
+  - This creates one aggregate input key and one ECDH operation per transaction
+  - It avoids revealing which input belongs to the payer in a collaborative transaction
+  - Speaker notes: Collaborative transactions remain complex and BIP 352 recommends that all inputs belong to one entity because there is no formal security proof for the general collaborative case.
+- Making every payment unique
+  - A hash commits to the aggregate input key and the lexicographically smallest outpoint
+  - The outpoint changes when the coins being spent change
+  - This prevents the same sender and receiver keys from deriving the same destination again
+  - An output counter `k` permits multiple outputs to the same recipient in one transaction
+- Sending: derive an ordinary-looking output
+  - Parse Bob's scan and spend public keys from the Silent Payment address
+  - Select transaction inputs and aggregate eligible input keys
+  - Derive the shared secret and bind it to this transaction
+  - Hash the secret into a tweak
+  - Add the tweak to Bob's spend public key
+  - Encode the result as a normal BIP 341 Taproot output
+  - Speaker notes: The on-chain output contains neither the Silent Payment address nor an explicit notification.
+- What appears on-chain?
+  - Inputs that would already be present
+  - A regular-looking P2TR output
+  - No `OP_RETURN`
+  - No payment code
+  - No protocol marker
+  - An observer cannot link the output back to Bob's published Silent Payment address
+- Receiving: the cost moves to scanning
+  - Find transactions with at least one Taproot output and at least one eligible input
+  - Reconstruct the aggregate public input key
+  - Derive the same shared secret with the private scan key
+  - Recreate candidate output keys and compare them with transaction outputs
+  - When one matches, add the output and tweak data to the wallet
+  - Speaker notes: A receiver may skip spent transactions if only looking for currently unspent funds, but recovery requires sufficient historical data.
+- Scan key versus spend key
+  - The private scan key must be available to recognize payments
+  - The private spend key can remain offline
+  - Finding an output does not by itself grant spending authority
+  - Spending requires the spend private key plus the per-output tweak
+  - Compromised scan key: incoming payments can be recognized, but not spent without the spend key
+  - Speaker notes: The scan key reveals received outputs and therefore transaction history. It is privacy-sensitive even though it cannot spend alone.
+- Labels: one wallet, several contexts
+  - Labels tweak the spend public key while reusing the same scan key
+  - They can distinguish sources such as a website, invoice, or donation campaign
+  - They do not require an additional blockchain scan per label
+  - Reusing the same scan public key makes separately published labeled addresses linkable off-chain
+  - Label `m = 0` is reserved for change
+- Spending a received output
+  - The wallet recovers the tweak used for the matched output
+  - It combines that tweak, the spend private key, and any label tweak
+  - The result is the private key for the Taproot output
+  - The spend then looks like an ordinary Taproot key-path spend
+- What Silent Payments buy
+  - One static address without on-chain address reuse
+  - No receiver interaction or always-online address server
+  - No notification transaction, extra output, or protocol fingerprint
+  - Payments from the same sender are not automatically linked by the recipient
+  - Existing seed and descriptor backup models can be used
+- What they cost
+  - Receiving wallets must scan relevant blockchain transactions
+  - Private light-client scanning requires more bandwidth or specialized infrastructure
+  - Sharing the scan private key with a server improves convenience but sacrifices privacy to that server
+  - Outputs are Taproot-only
+  - Sending requires eligible input keys and rules out unsafe sighash behavior such as `SIGHASH_ANYONECANPAY`
+  - Hardware signing and collaborative transactions require additional protocol support
+- Ecosystem status: wallets
+  - Send and receive: BlindBit Desktop, Cake Wallet, Dana Wallet, and Sparrow Wallet
+  - Send-only: BitBox, Nunchuk Wallet, and Wasabi Wallet
+  - BlueWallet sends today and receiving is in progress
+  - Bitcoin Core support is in progress
+  - Agora supports sending, receiving, and privacy-preserving scanning for donations and crowdfunding
+  - Speaker notes: Source is silentpayments.xyz/docs/wallets, updated July 4, 2026. Support is evolving; advise caution with meaningful funds.
+- Ecosystem status: hardware and infrastructure
+  - BitBox02 can participate in sending; BIP 375 and BIP 376 support are not yet listed
+  - Coldcard, Krux, and SeedSigner support is in progress
+  - BIP 375 defines PSBT fields for sending to Silent Payments with hardware signers
+  - BIP 376 defines PSBT fields for spending received Silent Payment outputs
+  - Silentium demonstrates experimental light-wallet scanning but is explicitly a proof of concept
+- The trade
+  - Move complexity away from publishing fresh addresses and on-chain notifications
+  - Move it into sender key derivation and receiver scanning
+  - Better on-chain privacy, but heavier wallet engineering
+  - Silent Payments are an application-layer protocol; no Bitcoin consensus change is required
+- Takeaways
+  - One reusable identifier creates a different on-chain destination for every payment
+  - ECDH lets sender and receiver independently derive the same hidden tweak
+  - Ordinary Taproot outputs provide the anonymity set
+  - Scanning, light-client support, and hardware integration are the main practical challenges
+- Questions
+
+## Appendix
+
+- Notation and exact address construction
+- Exact sending derivation
+- Exact scanning derivation
+- Exact spending derivation
+- Scanning eligibility and stopping rules
 
 ## Sources
 
-- https://foundation.xyz/blog/making-sense-of-stealth-addresses
+- https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki
+- https://silentpayments.xyz/docs/
+- https://silentpayments.xyz/docs/wallets/
 - https://github.com/bitcoin/bips/blob/master/bip-0047.mediawiki
 - https://github.com/bitcoin/bips/blob/master/bip-0351.mediawiki
-- https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki
+- https://foundation.xyz/blog/making-sense-of-stealth-addresses

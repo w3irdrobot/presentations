@@ -1,0 +1,10 @@
+{
+  "name": "presentations-site",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "reveal.js": "5.2.1"
+  }
+}

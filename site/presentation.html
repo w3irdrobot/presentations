@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{TITLE}}</title>
+    <link rel="stylesheet" href="../assets/reveal/dist/reset.css">
+    <link rel="stylesheet" href="../assets/reveal/dist/reveal.css">
+    <link rel="stylesheet" href="../assets/reveal/dist/theme/black.css">
+    <link rel="stylesheet" href="../assets/reveal/plugin/highlight/monokai.css">
+    <link rel="stylesheet" href="../assets/styles/presentation.css">
+  </head>
+  <body>
+    <a class="site-home" href="../" aria-label="Back to all presentations">All talks</a>
+    <div class="reveal">
+      <div class="slides">
+        <section
+          data-markdown
+          data-separator="^\r?\n---\r?\n$"
+          data-separator-notes="^Notes?:"
+        >
+          <script type="text/template">
+{{MARKDOWN}}
+          </script>
+        </section>
+      </div>
+    </div>
+    <script src="../assets/reveal/dist/reveal.js"></script>
+    <script src="../assets/reveal/plugin/markdown/markdown.js"></script>
+    <script src="../assets/reveal/plugin/highlight/highlight.js"></script>
+    <script src="../assets/reveal/plugin/notes/notes.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes],
+      });
+    </script>
+  </body>
+</html>
