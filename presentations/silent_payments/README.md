@@ -1,0 +1,97 @@
+# Silent Payments
+
+A presentation about Silent Payments, the how and why it exists, pros and cons, and the current state in the Bitocin ecosystem.
+
+## Slides
+
+- Title
+- Basic outline
+- What is Silent Payments?
+  - Defined in BIP-352
+  - "a protocol for static payment addresses in Bitcoin without on-chain linkability of payments or a need for on-chain notifications"
+  - Show an example of what an SP address looks like
+  - sp1qqd7h3mht4zhkd780tf2wnlq3cqudw5nzq955ghjvfq3fxrxx4xtacqe7prvtsxvn4t6n3lzzntqxj35xsvpzfl76kuza3nwnkt5hg72cl5tjxtue
+- ...but why?
+- Standard addresses
+  - P2PK/P2PKH/P2SH/P2WPKH/Taproot
+  - Considered standard and supported in Bitcoin Core
+  - Talk about privacy issues and the requirement to get new addresses per transaction from a wallet
+  - Getting new addresses requires an always-online server if asynchronous
+- BIP-63 (Stealth Addresses)
+  - using a set of keys combined into one long payment code to allow senders to generate unique addresses for the recipient and leveraging the OP_RETURN
+  - relied on a large OP_RETURN field (something that was reduced shortly after it was proposed) and made every payment utilizing stealth addresses stand out on-chain
+- BIP-47 (Reusable Payment Codes)
+  - "a technique for creating a payment code which can be publicly advertised and associated with a real-life identity without creating the loss of security or privacy inherent to P2PKH address reuse"
+  - Sender makes a special notification transaction. After that, both parties can independently derive a sequence of private payment addresses.
+  - The sender establishes the relationship by sending a notification transaction to a public notification address derived from the recipient's payment code.
+- BIP-351 (Private Payments)
+  - Makes it possible for two parties to transact using addresses that only they can calculate.
+  - This is done using exclusively on-chain methods and in a manner that minimizes blockchain footprint.
+  - The sender establishes it by publishing a sender-specific public key plus an ECDH-derived identifier in an OP_RETURN, which the recipient recognizes by scanning.
+  - Speaker note: The motivation for BIP 351 is largely that BIP 47's fixed notification address is a privacy weakness: multiple people establishing relationships with the same recipient can be associated with that common notification address. BIP 351 removes that common on-chain anchor.
+- What makes Silent Payments different?
+  - Instead of there being an on-chain footprint, a sender is able to create addresses on the fly based on transaction data and data retrieved from the receiver's SP address
+  - The receiver then scans all transactions for these derived UTXO addresses and calculate if it was sent to them
+  - Speaker notes: We'll go through the process of creating and finding these transactions next.
+- Silent Payments Keys
+  - SP utilizes two keys instead of many derived keys from a root key
+  - They are called the scan key and the spend key
+  - This is done to allow one private key (the scan key) to be kept hot while the other is kept cold
+  - Both are needed to spend UTXOs to the SP address
+- Silent Payments Address
+  - A bech32m-encoded concatenation of the SEC1 compressed form of the scan public key and the SEC1 compressed form of B_m with an HRP of sp and a version of 0 (represented as q)
+  - B_m = B_spend + hash_BIP0352/Label(ser_256(b_scan) || ser32(m))·G, where hash_BIP0352/Label(ser)256(bscan) || ser_32(m))·G is an optional integer tweak for labeling
+    - B_m is the tweaked spend public key or just the public key if no tweak
+  - sp1qqd7h3mht4zhkd780tf2wnlq3cqudw5nzq955ghjvfq3fxrxx4xtacqe7prvtsxvn4t6n3lzzntqxj35xsvpzfl76kuza3nwnkt5hg72cl5tjxtue
+  - scan_private_key: m / purpose' / coin_type' / account' / 1' / 0
+  - spend_private_key: m / purpose' / coin_type' / account' / 0' / 0
+- Sending to a Silent Payments address
+  - Speaker notes: I'll keep this somewhat high level for brevity's sake
+  - Select the inputs for the transaction and collect the private keys for each as a_i
+  - Speaker note: Private keys are just really big numbers
+  - Add the private keys together to get another private key a = a_1 + a_2 + a_3 + ...
+  - Hash using tagged hashing the concatenation of the smallest outpoint lexicographically and the public key of a called A to get the input hash
+  - Group receiver SP addresses the scan public key B_scan
+  - For each group
+    - let ecdh_shared_secret = input_hash * a * B_scan
+    - let k = 0
+    - For each B_m in the group
+      - Let t_k = hash_BIP0352/SharedSecret(ser_P(ecdh_shared_secret) || ser_32(k))
+      - Let P_mn = B_m + t_k·G
+      - Encode P_mn as a BIP341 taproot output
+      - Optionally, repeat with k++ to create additional outputs for the current B_m
+      - If no additional outputs are required, continue to the next B_m with k++
+- Receiving (Scanning)
+  - let A = A_1 + A_2 + A_3 + ... where A_i is a public key of a valid input
+  - input_hash = hash_BIP0352/Inputs(outpoint_L || A) where outpoint_L the smallest outpoint lexicographically
+  - let ecdh_shared_secret = input_hash * b_scan * A
+  - Check all outputs keys from all Taproot outputs in the transaction
+    - Starting with k = 0
+      - If k == 2323, stop
+      - Let t_k = hash_BIP0352/SharedSecret(ser_P(ecdh_shared_secret) || ser_32(k))
+      - P_k = B_spend + t_k·G
+      - For each output to check
+        - If P_k is the output
+          - Add it to our wallet
+          - Remove it from the outputs to check and rescan with k++
+        - Check for labels
+          - Compute label = output - P_k
+          - Check if label exists in the list of labels used by the wallet
+          - If a match is found:
+            - Add P_k + label to the wallet
+            - Remove output from outputs_to_check and rescan outputs_to_check with k++
+          - If a label is not found, negate output and check a second time[22]
+      - If no matches are found, stop[23]
+- Spending
+  - Let d = (b_spend + t_k + hash_BIP0352/Label(ser_256(b_scan) || ser_32(m))) mod n, where hash_BIP0352/Label(ser_256(b_scan) || ser_32(m)) is the optional label
+  - Spend the BIP341 output with the private key d
+- Pros
+  -
+- Current state
+
+## Sources
+
+- https://foundation.xyz/blog/making-sense-of-stealth-addresses
+- https://github.com/bitcoin/bips/blob/master/bip-0047.mediawiki
+- https://github.com/bitcoin/bips/blob/master/bip-0351.mediawiki
+- https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki
