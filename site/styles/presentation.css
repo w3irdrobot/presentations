@@ -90,6 +90,8 @@
 
 .reveal pre {
   width: auto;
+  margin-right: auto;
+  margin-left: 0;
   padding: 0.65em 0.8em;
   border: 1px solid rgb(255 255 255 / 12%);
   border-radius: 0.2em;
