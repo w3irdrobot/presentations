@@ -1,5 +1,3 @@
-<!-- .slide: data-background-color="#0b1015" -->
-
 # Silent Payments
 
 ### A reusable Bitcoin address<br>without reusable on-chain addresses
@@ -89,8 +87,6 @@ Notes:
 Keep this concise. BIP 47 establishes a relationship through a transaction to a notification address. BIP 351 removes that common recipient notification anchor, but still uses an on-chain notification. Silent Payments ask whether the transaction already contains enough public information to make notification implicit.
 
 ---
-
-<!-- .slide: data-background-color="#111923" -->
 
 # The cryptographic hinge
 
@@ -343,8 +339,6 @@ Notes:
 Hardware signers do not scan the chain themselves; a paired software wallet does. The signer must nevertheless understand enough data to safely derive or authorize the right output and spend key. Silentium demonstrates a possible light-client direction but explicitly warns against use with meaningful funds.
 
 ---
-
-<!-- .slide: data-background-color="#111923" -->
 
 # The trade
 
