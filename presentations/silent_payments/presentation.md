@@ -13,11 +13,11 @@ This is a technical dive, but the goal is to understand the machinery rather tha
 
 ## Receive now, stay private later
 
-| One normal address | Fresh addresses |
-|---|---|
-| Easy to publish | Harder to coordinate |
-| Works while offline | Receiver or server must respond |
-| Payments link on-chain | Payments remain separate |
+| One normal address     | Fresh addresses                 |
+| ---------------------- | ------------------------------- |
+| Easy to publish        | Harder to coordinate            |
+| Works while offline    | Receiver or server must respond |
+| Payments link on-chain | Payments remain separate        |
 
 Notes:
 Use a donation page as the running example. Bob wants to publish one place to pay him. A normal address is convenient, but anyone can see every donation and the total balance. Generating a fresh address fixes that only if Bob or his infrastructure is online to hand it out.
@@ -54,18 +54,17 @@ sp  +  version 0  +  scan public key  +  spend public key
 - 116 characters
 
 Notes:
-The address carries two compressed public keys, 33 bytes each. It is longer than a normal Bitcoin address because it is a reusable payment instruction, not an output script. Version 0 uses `sp` on mainnet and `tsp` on test networks.
+The address carries two compressed public keys, 33 bytes each. It is longer than a normal Bitcoin address because it is a reusable payment instruction, not an output script. Version 0 uses `q`
 
 ---
 
 # Why two keys?
 
-```text
-SCAN KEY                         SPEND KEY
-recognizes incoming payments     authorizes spending
-online / hot                     can remain offline / cold
-privacy-sensitive               money-sensitive
-```
+| Scan key                     | Spend key                 |
+| ---------------------------- | ------------------------- |
+| Recognizes incoming payments | Authorizes spending       |
+| Online / hot                 | Can remain offline / cold |
+| Privacy-sensitive            | Money-sensitive           |
 
 The public halves of both keys are safe to publish.
 
@@ -76,12 +75,11 @@ The receiver must repeatedly test transactions, so the private scan key needs to
 
 # Earlier approaches
 
-| Proposal | How the receiver learns |
-|---|---|
-| BIP 63 Stealth Addresses | `OP_RETURN` notification |
-| BIP 47 Payment Codes | Initial notification transaction |
+| Proposal                 | How the receiver learns                  |
+| ------------------------ | ---------------------------------------- |
+| BIP 63 Stealth Addresses | `OP_RETURN` notification                 |
+| BIP 47 Payment Codes     | Initial notification transaction         |
 | BIP 351 Private Payments | Sender-specific `OP_RETURN` notification |
-| **BIP 352 Silent Payments** | Existing transaction input data |
 
 Notes:
 Keep this concise. BIP 47 establishes a relationship through a transaction to a notification address. BIP 351 removes that common recipient notification anchor, but still uses an on-chain notification. Silent Payments ask whether the transaction already contains enough public information to make notification implicit.
@@ -92,15 +90,11 @@ Keep this concise. BIP 47 establishes a relationship through a transaction to a 
 
 ## Both sides can find the same secret
 
-```text
-Alice                                           Bob
+| Alice calculates | Bob calculates |
+|---|---|
+| Alice's private input key<br>&times; Bob's public scan key | Alice's public input key<br>&times; Bob's private scan key |
 
-Alice's private input key  x  Bob's public scan key
-                         =
-Alice's public input key   x  Bob's private scan key
-```
-
-### Elliptic-curve Diffie-Hellman
+Both calculations produce the same secret through **elliptic-curve Diffie-Hellman**.
 
 Notes:
 Private keys are large numbers; public keys are points derived from them. Alice has one private value and Bob's public value. Bob has the corresponding public value and his private value. ECDH guarantees the result is equal. An observer has only public values, which is not enough to reproduce the secret.
@@ -118,7 +112,7 @@ The transaction must contain at least one eligible input:
 - P2SH-P2WPKH
 - P2PKH
 
-The sender needs the corresponding private key.  
+The sender needs the corresponding private key.
 The receiver must be able to recover its public key.
 
 Notes:
@@ -311,12 +305,12 @@ The sender must not use SIGHASH_ANYONECANPAY because adding inputs after output 
 
 <small>Source: silentpayments.xyz, updated July 4, 2026</small>
 
-| Send + receive | Send only / receive pending |
-|---|---|
-| BlindBit Desktop | BitBox |
-| Cake Wallet | BlueWallet* |
-| Dana Wallet | Nunchuk Wallet |
-| Sparrow Wallet | Wasabi Wallet |
+| Send + receive   | Send only / receive pending |
+| ---------------- | --------------------------- |
+| BlindBit Desktop | BitBox                      |
+| Cake Wallet      | BlueWallet*                 |
+| Dana Wallet      | Nunchuk Wallet              |
+| Sparrow Wallet   | Wasabi Wallet               |
 
 <small>*BlueWallet receiving is in progress. Bitcoin Core support is in progress.</small>
 
@@ -379,14 +373,14 @@ BIP 352 · silentpayments.xyz
 
 # Appendix: notation
 
-| Symbol | Meaning |
-|---|---|
-| `a`, `A` | Aggregate input private/public key |
-| `b_scan`, `B_scan` | Receiver scan private/public key |
-| `b_spend`, `B_spend` | Receiver spend private/public key |
-| `G` | secp256k1 generator point |
-| `k` | Output counter, beginning at zero |
-| `m` | Optional label index |
+| Symbol               | Meaning                            |
+| -------------------- | ---------------------------------- |
+| `a`, `A`             | Aggregate input private/public key |
+| `b_scan`, `B_scan`   | Receiver scan private/public key   |
+| `b_spend`, `B_spend` | Receiver spend private/public key  |
+| `G`                  | secp256k1 generator point          |
+| `k`                  | Output counter, beginning at zero  |
+| `m`                  | Optional label index               |
 
 Notes:
 Lowercase letters are private scalars; uppercase letters are public curve points. Multiplying a private scalar by G derives its public key.
