@@ -94,10 +94,10 @@ Keep this concise. BIP 47 establishes a relationship through a transaction to a 
 |---|---|
 | Alice's private input key<br>&times; Bob's public scan key | Alice's public input key<br>&times; Bob's private scan key |
 
-Both calculations produce the same secret through **elliptic-curve Diffie-Hellman**.
+Both calculations produce the **same shared point**.
 
 Notes:
-Private keys are large numbers; public keys are points derived from them. Alice has one private value and Bob's public value. Bob has the corresponding public value and his private value. ECDH guarantees the result is equal. An observer has only public values, which is not enough to reproduce the secret.
+Private keys are large numbers; public keys are points derived from them. Alice has one private value and Bob's public value. Bob has the corresponding public value and his private value. The relationship between each private key and public key makes both calculations equal. An observer has only public values, which is not enough to reproduce the shared point.
 
 The simplified identity is a * B_scan = b_scan * A. This symmetry is the core of the protocol.
 
@@ -129,7 +129,7 @@ Public side:   input key 1 + input key 2 + input key 3
 ```
 
 - One aggregate key per transaction
-- One expensive ECDH operation per receiver group
+- One shared-point calculation per receiver group
 - No need to reveal which input belongs to the payer
 
 Notes:
@@ -152,7 +152,7 @@ aggregate input key + smallest input outpoint + output counter
 - Counter `k` allows several outputs to one recipient
 
 Notes:
-ECDH alone could repeat if Alice reused the same input key. BIP 352 hashes the aggregate key with the lexicographically smallest outpoint, creating a transaction-specific input hash. Hashing the shared secret with counter k then supports multiple distinct outputs in the same transaction.
+The shared point alone could repeat if Alice reused the same input key. BIP 352 hashes the aggregate key with the lexicographically smallest outpoint, creating a transaction-specific input hash. Hashing the shared secret with counter k then supports multiple distinct outputs in the same transaction.
 
 The smallest outpoint is deterministic regardless of input ordering and is convenient for memory-constrained hardware devices.
 
@@ -173,7 +173,7 @@ eligible inputs -> shared secret -> hash into a tweak
 ```
 
 Notes:
-Walk from top to bottom. Alice parses Bob's two public keys, selects inputs, aggregates their private keys, and derives the ECDH secret with Bob's scan public key. She binds it to the input hash, hashes it with k, and adds that tweak to Bob's spend public key.
+Walk from top to bottom. Alice parses Bob's two public keys, selects inputs, aggregates their private keys, and derives the shared point with Bob's scan public key. She binds it to the input hash, hashes it with k, and adds that tweak to Bob's spend public key.
 
 Conceptual formula: P_k = B_spend + hash(input_hash * shared_secret || k) * G.
 
@@ -208,7 +208,7 @@ For each eligible transaction, Bob's wallet:
 5. Records any match and its tweak
 
 Notes:
-This is the inversion of sending. Bob computes the same input hash from public transaction data, then performs ECDH using his private scan key and the aggregate public input key. Because both sides derive the same secret, Bob recreates Alice's candidate output.
+This is the inversion of sending. Bob computes the same input hash from public transaction data, then combines his private scan key with the aggregate public input key. Because both sides derive the same shared point, Bob recreates Alice's candidate output.
 
 Scanning is required only for transactions with at least one Taproot output and one eligible input. Version 0 also skips transactions spending an input with a future SegWit version greater than 1.
 
@@ -354,7 +354,7 @@ No Bitcoin consensus change is required; this is an application-layer protocol u
 # Takeaways
 
 1. One reusable identifier creates a unique destination per payment
-2. ECDH lets sender and receiver derive the same hidden tweak
+2. Sender and receiver independently derive the same hidden tweak
 3. On-chain, the result looks like an ordinary Taproot output
 4. Scanning is the price of removing interaction and notifications
 5. Wallet support exists, but integration is still maturing
