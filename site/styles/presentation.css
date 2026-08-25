@@ -81,11 +81,18 @@
 
 .reveal blockquote {
   width: auto;
-  padding: 0.15em 0 0.15em 0.8em;
+  padding: 0.15em 0 0.15em 0.7em;
+  margin-right: auto;
+  margin-left: 0;
   border-left: 3px solid var(--r-link-color);
   background: none;
   box-shadow: none;
   font-style: normal;
+}
+
+.reveal blockquote p {
+  display: block;
+  margin: 0;
 }
 
 .reveal pre {
