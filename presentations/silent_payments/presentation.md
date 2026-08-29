@@ -167,13 +167,13 @@ A = a * G
 input_hash = hash_BIP0352/Inputs(outpoint_L || A)
 secret     = input_hash * a * B_scan
 t_k        = hash_BIP0352/SharedSecret(ser_P(secret) || ser_32(k))
-P_m,k      = B_m + t_k * G
+P_k        = B_spend + t_k * G
 ```
 
-Encode `P_m,k` as a BIP 341 Taproot output.
+Encode only the resulting public key `P_k` as a BIP 341 Taproot output.
 
 Notes:
-Walk from top to bottom. Alice aggregates the eligible private input keys into a, derives the corresponding public key A, and hashes A with the smallest input outpoint. She uses that input hash and Bob's scan public key to calculate the shared point, hashes it with counter k into a tweak, and adds the tweak to Bob's spend public key B_m.
+Walk from top to bottom. Alice aggregates the eligible private input keys into a, derives the corresponding public key A, and hashes A with the smallest input outpoint. She uses that input hash and Bob's scan public key to calculate the shared point, hashes it with counter k into a tweak, and adds the tweak to Bob's spend public key B_spend. The counter is an input to the derivation; it is not encoded separately in the output.
 
 ---
 
