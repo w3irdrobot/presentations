@@ -54,7 +54,7 @@ sp  +  version 0  +  scan public key  +  spend public key
 - 116 characters
 
 Notes:
-The address carries two compressed public keys, 33 bytes each. It is longer than a normal Bitcoin address because it is a reusable payment instruction, not an output script. Version 0 uses `q`
+The address carries two SEC1 compressed public keys, 33 bytes each. It is longer than a normal Bitcoin address because it is a reusable payment instruction, not an output script. Version 0 uses `q`
 
 ---
 
@@ -90,8 +90,8 @@ Keep this concise. BIP 47 establishes a relationship through a transaction to a 
 
 ## Both sides can find the same secret
 
-| Alice calculates | Bob calculates |
-|---|---|
+| Alice calculates                                           | Bob calculates                                             |
+| ---------------------------------------------------------- | ---------------------------------------------------------- |
 | Alice's private input key<br>&times; Bob's public scan key | Alice's public input key<br>&times; Bob's private scan key |
 
 Both calculations produce the **same shared point**.
@@ -165,11 +165,17 @@ Bob's Silent Payment address
             |
    scan key + spend key
             |
-eligible inputs -> shared secret -> hash into a tweak
-                                      |
-                 spend public key + tweak
-                                      |
-                           Taproot output key
+eligible inputs
+      |
+aggregate input key + smallest input outpoint
+      |
+calculate input hash
+      |
+shared point + input hash + counter k
+      |
+hash into a tweak -> spend public key + tweak
+                              |
+                    Taproot output key
 ```
 
 Notes:
