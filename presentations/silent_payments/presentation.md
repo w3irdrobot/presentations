@@ -161,12 +161,22 @@ The smallest outpoint is deterministic regardless of input ordering and is conve
 # Sending
 
 ```text
+# Aggregate the eligible private input keys
 a = a_1 + a_2 + ... + a_n
+
+# Derive the matching aggregate public key
 A = a * G
 
+# Bind the calculation to this transaction's inputs
 input_hash = hash_BIP0352/Inputs(outpoint_L || A)
+
+# Calculate the shared point
 secret     = input_hash * a * B_scan
+
+# Turn the shared point and counter into a tweak
 t_k        = hash_BIP0352/SharedSecret(ser_P(secret) || ser_32(k))
+
+# Add the tweak to the receiver's spend public key
 P_k        = B_spend + t_k * G
 ```
 
