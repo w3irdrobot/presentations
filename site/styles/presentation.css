@@ -114,6 +114,10 @@
   background: transparent;
 }
 
+.reveal pre.trade-offs {
+  margin-bottom: 1.5em;
+}
+
 .reveal code {
   font-size: 0.88em;
 }

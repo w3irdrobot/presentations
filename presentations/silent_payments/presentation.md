@@ -311,19 +311,21 @@ The sender must not use SIGHASH_ANYONECANPAY because adding inputs after output 
 
 # Wallet support
 
-<small>Source: silentpayments.xyz, updated July 4, 2026</small>
+<small>Source: silentpayments.xyz, updated August 21, 2026</small>
 
-| Send + receive   | Send only / receive pending |
-| ---------------- | --------------------------- |
-| BlindBit Desktop | BitBox                      |
-| Cake Wallet      | BlueWallet*                 |
-| Dana Wallet      | Nunchuk Wallet              |
-| Sparrow Wallet   | Wasabi Wallet               |
+| Send + receive   | Send only     | In progress  |
+| ---------------- | ------------- | ------------ |
+| BlindBit Desktop | BitBox        | Bitcoin Core |
+| Cake Wallet      | BlueWallet*   | Unchained    |
+| Dana Wallet      | Nunchuk Wallet |              |
+| Sparrow Wallet   | Wasabi Wallet |              |
 
-<small>*BlueWallet receiving is in progress. Bitcoin Core support is in progress.</small>
+<small>*BlueWallet receiving is in progress.</small>
 
 Notes:
-Agora also supports sending, receiving, and privacy-preserving scanning for its donation and crowdfunding application. The ecosystem is moving quickly and the support page warns users to be cautious with real funds.
+Agora and Tacit are applications with built-in wallets that support sending, receiving, and privacy-preserving scanning. The ecosystem is moving quickly and the support page warns users to be cautious with real funds.
+
+Bitcoin Core has sending and receiving work in progress. Unchained has sending and BIP 375 support in progress, but not receiving.
 
 "Privacy-preserving scanning" means the backend is not given information identifying the user's outputs.
 
@@ -349,6 +351,7 @@ fresh-address coordination        sender key derivation
 on-chain notification       ->    receiver scanning
 protocol fingerprint              ordinary Taproot output
 ```
+<!-- .element: class="trade-offs" -->
 
 ## Better on-chain privacy,<br>heavier wallet engineering.
 
@@ -356,16 +359,6 @@ Notes:
 This is the framing to leave with the audience. Silent Payments do not make complexity disappear. They relocate it from user interaction and visible blockchain messages into wallet cryptography and data access.
 
 No Bitcoin consensus change is required; this is an application-layer protocol using existing transaction data and Taproot outputs.
-
----
-
-# Takeaways
-
-1. One reusable identifier creates a unique destination per payment
-2. Sender and receiver independently derive the same hidden tweak
-3. On-chain, the result looks like an ordinary Taproot output
-4. Scanning is the price of removing interaction and notifications
-5. Wallet support exists, but integration is still maturing
 
 ---
 
@@ -424,10 +417,10 @@ A = a * G
 input_hash = hash_BIP0352/Inputs(outpoint_L || A)
 secret     = input_hash * a * B_scan
 t_k        = hash_BIP0352/SharedSecret(ser_P(secret) || ser_32(k))
-P_m,k      = B_m + t_k * G
+P_k        = B_spend + t_k * G
 ```
 
-Encode `P_m,k` as a BIP 341 Taproot output.
+Encode only the resulting public key `P_k` as a BIP 341 Taproot output.
 
 ---
 
