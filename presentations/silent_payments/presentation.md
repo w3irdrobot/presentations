@@ -161,27 +161,19 @@ The smallest outpoint is deterministic regardless of input ordering and is conve
 # Sending
 
 ```text
-Bob's Silent Payment address
-            |
-   scan key + spend key
-            |
-eligible inputs
-      |
-aggregate input key + smallest input outpoint
-      |
-calculate input hash
-      |
-shared point + input hash + counter k
-      |
-hash into a tweak -> spend public key + tweak
-                              |
-                    Taproot output key
+a = a_1 + a_2 + ... + a_n
+A = a * G
+
+input_hash = hash_BIP0352/Inputs(outpoint_L || A)
+secret     = input_hash * a * B_scan
+t_k        = hash_BIP0352/SharedSecret(ser_P(secret) || ser_32(k))
+P_m,k      = B_m + t_k * G
 ```
 
-Notes:
-Walk from top to bottom. Alice parses Bob's two public keys, selects inputs, aggregates their private keys, and derives the shared point with Bob's scan public key. She binds it to the input hash, hashes it with k, and adds that tweak to Bob's spend public key.
+Encode `P_m,k` as a BIP 341 Taproot output.
 
-Conceptual formula: P_k = B_spend + hash(input_hash * shared_secret || k) * G.
+Notes:
+Walk from top to bottom. Alice aggregates the eligible private input keys into a, derives the corresponding public key A, and hashes A with the smallest input outpoint. She uses that input hash and Bob's scan public key to calculate the shared point, hashes it with counter k into a tweak, and adds the tweak to Bob's spend public key B_m.
 
 ---
 
