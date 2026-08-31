@@ -63,8 +63,6 @@ This is BIP 352's central promise. The reusable address is communicated off-chai
 
 # A Silent Payment address
 
-## Two keys?
-
 <code class="address-example"><span class="address-prefix">sp1q</span><span class="address-scan">qd7h3mht4zhkd780tf2wnlq3cqudw5nzq955ghjvfq3fxrxx4xta</span><span class="address-boundary">c</span><span class="address-spend">qe7prvtsxvn4t6n3lzzntqxj35xsvpzfl76kuza3nwnkt5hg72cl5</span><span class="address-checksum">tjxtue</span></code>
 
 <div class="address-legend"><span class="address-prefix">Prefix + version</span><span class="address-scan">Scan public key</span><span class="address-spend">Spend public key</span><span class="address-checksum">Checksum</span></div>
@@ -72,6 +70,7 @@ This is BIP 352's central promise. The reusable address is communicated off-chai
 - Bech32m encoded
 - `sp1q...` on mainnet
 - 116 characters
+- Two keys?
 
 <small>The highlighted boundary character contains bits from both public keys.</small>
 
@@ -310,12 +309,12 @@ The sender must not use SIGHASH_ANYONECANPAY because adding inputs after output 
 
 <small>Source: silentpayments.xyz, updated August 21, 2026</small>
 
-| Send + receive   | Send only     | In progress  |
-| ---------------- | ------------- | ------------ |
-| BlindBit Desktop | BitBox        | Bitcoin Core |
-| Cake Wallet      | BlueWallet*   | Unchained    |
+| Send + receive   | Send only      | In progress  |
+| ---------------- | -------------- | ------------ |
+| BlindBit Desktop | BitBox         | Bitcoin Core |
+| Cake Wallet      | BlueWallet*    | Unchained    |
 | Dana Wallet      | Nunchuk Wallet |              |
-| Sparrow Wallet   | Wasabi Wallet |              |
+| Sparrow Wallet   | Wasabi Wallet  |              |
 
 <small>*BlueWallet receiving is in progress.</small>
 
