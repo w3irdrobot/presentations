@@ -95,7 +95,6 @@ The receiver must repeatedly test transactions, so the private scan key needs to
 ---
 
 # Here be dragons
-<!-- .slide: class="center section-break" -->
 
 ---
 
