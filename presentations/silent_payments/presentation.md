@@ -155,9 +155,14 @@ Other inputs may fund the transaction, but they are ignored for shared-secret de
 # Many inputs, one aggregate key
 
 ```text
-Private side:  input key 1 + input key 2 + input key 3
-                              | mathematically corresponds
-Public side:   input key 1 + input key 2 + input key 3
+Private sum:  a = a_1 + a_2 + a_3
+                  |
+                  | multiply by G
+                  v
+Public sum:   A = a * G
+                = A_1 + A_2 + A_3
+
+where A_i = a_i * G
 ```
 
 - One aggregate key per transaction
@@ -165,7 +170,7 @@ Public side:   input key 1 + input key 2 + input key 3
 - No need to reveal which input belongs to the payer
 
 Notes:
-The sender adds eligible private keys. The receiver extracts and adds their public keys. Elliptic-curve key addition preserves the correspondence between the two sums.
+The sender adds eligible private scalars. Multiplying that sum by G produces the same point as deriving and adding the corresponding public input keys. The receiver can therefore reconstruct A from public transaction data without learning a.
 
 Using all inputs reduces receiver work compared with checking each input separately. It also avoids telling Bob which input was Alice's in a collaborative transaction. BIP 352 still recommends that inputs belong to one entity because the general collaborative setting lacks a formal security proof.
 
