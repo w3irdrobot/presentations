@@ -28,6 +28,15 @@
   max-width: 72%;
 }
 
+.reveal .slides section.section-break {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.reveal .slides section.section-break h1 {
+  margin: 0;
+}
+
 .reveal h1,
 .reveal h2,
 .reveal h3,
