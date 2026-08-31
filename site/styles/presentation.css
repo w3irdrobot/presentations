@@ -122,6 +122,48 @@
   font-size: 0.88em;
 }
 
+.reveal .address-example {
+  display: block;
+  max-width: 92%;
+  margin: 1.1em 0 0.8em;
+  font-size: 0.69em;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.reveal .address-prefix {
+  color: #f0ad4e;
+}
+
+.reveal .address-scan {
+  color: #63c5da;
+}
+
+.reveal .address-boundary {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-color: #b78cff;
+  text-decoration-thickness: 0.15em;
+}
+
+.reveal .address-spend {
+  color: #b78cff;
+}
+
+.reveal .address-checksum {
+  color: rgb(238 238 238 / 48%);
+}
+
+.reveal .address-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55em 1.1em;
+  max-width: 92%;
+  margin-bottom: 0.9em;
+  font-size: 0.58em;
+  font-weight: 650;
+}
+
 .reveal table {
   display: table;
   width: 72%;

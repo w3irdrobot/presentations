@@ -9,18 +9,41 @@ This is a technical dive, but the goal is to understand the machinery rather tha
 
 ---
 
+# Overview
+
+1. The privacy problem
+2. What a Silent Payment address contains
+3. How sending and receiving work
+4. Practical tradeoffs and wallet support
+
+Notes:
+Start with the motivation, then unpack the address and the calculations behind it. Finish with what this design costs in practice and where wallet support stands today.
+
+---
+
 # The problem
 
-## Receive now, stay private later
+## Reusable addresses are convenient.<br>Address reuse is not private.
 
-| One normal address     | Fresh addresses                 |
-| ---------------------- | ------------------------------- |
-| Easy to publish        | Harder to coordinate            |
-| Works while offline    | Receiver or server must respond |
-| Payments link on-chain | Payments remain separate        |
+- A static address is easy to publish and works while you are offline
+- Reusing it links every payment and exposes the payment history
+- Fresh addresses preserve privacy but require coordination or an online server
 
 Notes:
 Use a donation page as the running example. Bob wants to publish one place to pay him. A normal address is convenient, but anyone can see every donation and the total balance. Generating a fresh address fixes that only if Bob or his infrastructure is online to hand it out.
+
+---
+
+# Earlier approaches
+
+| Proposal                 | How the receiver learns                  |
+| ------------------------ | ---------------------------------------- |
+| BIP 63 Stealth Addresses | `OP_RETURN` notification                 |
+| BIP 47 Payment Codes     | Initial notification transaction         |
+| BIP 351 Private Payments | Sender-specific `OP_RETURN` notification |
+
+Notes:
+Keep this concise. BIP 47 establishes a relationship through a transaction to a notification address. BIP 351 removes that common recipient notification anchor, but still uses an on-chain notification. Silent Payments ask whether the transaction already contains enough public information to make notification implicit.
 
 ---
 
@@ -40,21 +63,20 @@ This is BIP 352's central promise. The reusable address is communicated off-chai
 
 # A Silent Payment address
 
-```text
-sp1qqd7h3mht4zhkd780tf2wnlq3cqudw5nzq955ghjvfq3fxrxx4x
-tacqe7prvtsxvn4t6n3lzzntqxj35xsvpzfl76kuza3nwnkt5hg72cl5tjxtue
-```
+## Two keys?
 
-```text
-sp  +  version 0  +  scan public key  +  spend public key
-```
+<code class="address-example"><span class="address-prefix">sp1q</span><span class="address-scan">qd7h3mht4zhkd780tf2wnlq3cqudw5nzq955ghjvfq3fxrxx4xta</span><span class="address-boundary">c</span><span class="address-spend">qe7prvtsxvn4t6n3lzzntqxj35xsvpzfl76kuza3nwnkt5hg72cl5</span><span class="address-checksum">tjxtue</span></code>
+
+<div class="address-legend"><span class="address-prefix">Prefix + version</span><span class="address-scan">Scan public key</span><span class="address-spend">Spend public key</span><span class="address-checksum">Checksum</span></div>
 
 - Bech32m encoded
 - `sp1q...` on mainnet
 - 116 characters
 
+<small>The highlighted boundary character contains bits from both public keys.</small>
+
 Notes:
-The address carries two SEC1 compressed public keys, 33 bytes each. It is longer than a normal Bitcoin address because it is a reusable payment instruction, not an output script. Version 0 uses `q`
+The address carries two serialized public keys, 33 bytes each. It is longer than a normal Bitcoin address because it is a reusable payment instruction, not an output script. Version 0 appears as `q` after the separator. Bech32m converts bytes into 5-bit characters, so the boundary between the two keys falls inside one displayed character.
 
 ---
 
@@ -73,16 +95,7 @@ The receiver must repeatedly test transactions, so the private scan key needs to
 
 ---
 
-# Earlier approaches
-
-| Proposal                 | How the receiver learns                  |
-| ------------------------ | ---------------------------------------- |
-| BIP 63 Stealth Addresses | `OP_RETURN` notification                 |
-| BIP 47 Payment Codes     | Initial notification transaction         |
-| BIP 351 Private Payments | Sender-specific `OP_RETURN` notification |
-
-Notes:
-Keep this concise. BIP 47 establishes a relationship through a transaction to a notification address. BIP 351 removes that common recipient notification anchor, but still uses an on-chain notification. Silent Payments ask whether the transaction already contains enough public information to make notification implicit.
+# Here be dragons
 
 ---
 
@@ -222,22 +235,6 @@ Scanning is required only for transactions with at least one Taproot output and 
 
 ---
 
-# Why scanning stops
-
-```text
-k = 0 -> candidate found? -> yes -> try k = 1
-                          -> no  -> stop
-```
-
-- Outputs may appear in any transaction order
-- A missing next candidate ends the sequence
-- A safety limit stops at `k = 2^32 - 1`
-
-Notes:
-The counter describes derivation order, not transaction output position. Bob checks all relevant outputs for candidate zero. A match means Alice may have made another output, so Bob increments k. The first miss stops the search. The protocol's upper bound is 2^32 - 1.
-
----
-
 # Labels
 
 ```text
@@ -372,6 +369,18 @@ BIP 352 · silentpayments.xyz
 
 <!-- .slide: data-visibility="uncounted" -->
 
+# Sources
+
+- [BIP 352: Silent Payments](https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki)
+- [Silent Payments documentation](https://silentpayments.xyz/docs/)
+- [Wallet support](https://silentpayments.xyz/docs/wallets/)
+- [BIP 47: Reusable Payment Codes](https://github.com/bitcoin/bips/blob/master/bip-0047.mediawiki)
+- [BIP 351: Private Payments](https://github.com/bitcoin/bips/blob/master/bip-0351.mediawiki)
+
+---
+
+<!-- .slide: data-visibility="uncounted" -->
+
 # Appendix: notation
 
 | Symbol               | Meaning                            |
@@ -460,15 +469,3 @@ d = (b_spend + t_k) mod n
 ```
 
 Use `d` to spend the BIP 341 output.
-
----
-
-<!-- .slide: data-visibility="uncounted" -->
-
-# Sources
-
-- [BIP 352: Silent Payments](https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki)
-- [Silent Payments documentation](https://silentpayments.xyz/docs/)
-- [Wallet support](https://silentpayments.xyz/docs/wallets/)
-- [BIP 47: Reusable Payment Codes](https://github.com/bitcoin/bips/blob/master/bip-0047.mediawiki)
-- [BIP 351: Private Payments](https://github.com/bitcoin/bips/blob/master/bip-0351.mediawiki)
