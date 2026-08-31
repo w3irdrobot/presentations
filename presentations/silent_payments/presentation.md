@@ -99,6 +99,26 @@ The receiver must repeatedly test transactions, so the private scan key needs to
 
 ---
 
+# Cryptography primer
+
+```text
+a          private key: a large number
+G          secp256k1 generator point
+A = a * G  public key: a point on the curve
+```
+
+- Lowercase letters are private numbers: `a`, `b_scan`, `b_spend`
+- Uppercase letters are their public points: `A`, `B_scan`, `B_spend`
+- Multiplying a point by a private number is simple
+- Recovering the private number from the public point is not
+
+Notes:
+The star means scalar multiplication: repeatedly adding a curve point to itself, not ordinary multiplication. G is a fixed public starting point used by every secp256k1 key pair. Given a, deriving A is straightforward; given only A and G, recovering a is computationally infeasible.
+
+Public points can also be added. This is why adding private input keys corresponds to adding their public keys later in the presentation.
+
+---
+
 # The cryptographic hinge
 
 ## Both sides can find the same secret
@@ -110,7 +130,7 @@ The receiver must repeatedly test transactions, so the private scan key needs to
 Both calculations produce the **same shared point**.
 
 Notes:
-Private keys are large numbers; public keys are points derived from them. Alice has one private value and Bob's public value. Bob has the corresponding public value and his private value. The relationship between each private key and public key makes both calculations equal. An observer has only public values, which is not enough to reproduce the shared point.
+Alice has one private value and Bob's public point. Bob has the corresponding public point and his private value. The relationship between each private key and public key makes both calculations equal. An observer has only public values, which is not enough to reproduce the shared point.
 
 The simplified identity is a * B_scan = b_scan * A. This symmetry is the core of the protocol.
 
