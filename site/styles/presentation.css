@@ -52,6 +52,10 @@
   letter-spacing: 0;
 }
 
+.reveal h2.closing-thought {
+  margin-top: 1.15em;
+}
+
 .reveal p,
 .reveal blockquote,
 .reveal pre,
@@ -114,10 +118,6 @@
   background: transparent;
 }
 
-.reveal pre.trade-offs {
-  margin-bottom: 1.5em;
-}
-
 .reveal code {
   font-size: 0.88em;
 }
@@ -141,9 +141,9 @@
 
 .reveal .address-boundary {
   color: #fff;
-  text-decoration: underline;
-  text-decoration-color: #b78cff;
-  text-decoration-thickness: 0.15em;
+  padding: 0.06em 0.14em;
+  border-radius: 0.15em;
+  background: linear-gradient(90deg, #63c5da 0 50%, #b78cff 50% 100%);
 }
 
 .reveal .address-spend {

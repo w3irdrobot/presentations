@@ -9,6 +9,16 @@ This is a technical dive, but the goal is to understand the machinery rather tha
 
 ---
 
+# Announcements
+
+- Midwest Bitcoin Summit, Sept. 23-24 in Columbus
+  - Use code `COLUMBUS` for 21% off admission
+  - Ohio meetup of meetups Sept. 22 (go to Columbus Bitcoin meetup to RSVP)
+- Next meetup Sept. 17 at West Side Brewing
+- Circular economy
+
+---
+
 # Overview
 
 1. The privacy problem
@@ -18,6 +28,22 @@ This is a technical dive, but the goal is to understand the machinery rather tha
 
 Notes:
 Start with the motivation, then unpack the address and the calculations behind it. Finish with what this design costs in practice and where wallet support stands today.
+
+---
+
+# Why talk about this now?
+
+- Silent Payments solve a real privacy and coordination problem
+- Wallet, hardware-signer, and infrastructure support is growing
+- They are likely to become a larger part of Bitcoin privacy discussions
+
+## It is not magic.<br>It is just math and wallet engineering.
+<!-- .element: class="closing-thought" -->
+
+Notes:
+Silent Payments are still early, but the ecosystem is actively building support around them. Understanding the mechanism now makes future wallet features, tradeoffs, and protocol discussions easier to evaluate.
+
+The purpose of this talk is to remove the magic. Every output follows from public transaction data, private keys held by the sender or receiver, and a small sequence of reproducible calculations.
 
 ---
 
@@ -266,7 +292,6 @@ same scan key + labeled spend key
 ```
 
 - Distinguish a website, invoice, or campaign
-- Do not add one full blockchain scan per label
 - Allow the wallet to identify the payment's source
 - Label `0` is reserved for change
 
@@ -365,21 +390,19 @@ Hardware signers do not scan the chain themselves; a paired software wallet does
 
 ---
 
-# The trade
+# Recap
 
-```text
-fresh-address coordination        sender key derivation
-on-chain notification       ->    receiver scanning
-protocol fingerprint              ordinary Taproot output
-```
-<!-- .element: class="trade-offs" -->
+## Static address. Unique outputs.<br>No on-chain link between them.
 
-## Better on-chain privacy,<br>heavier wallet engineering.
+1. Bob publishes one address containing **scan** and **spend** public keys
+2. Alice combines that address with her transaction inputs to derive a **unique output key**
+3. On-chain, the payment is an **ordinary Taproot output** with no notification or protocol marker
+4. Bob finds the payment by **scanning transactions** with his private scan key
 
 Notes:
-This is the framing to leave with the audience. Silent Payments do not make complexity disappear. They relocate it from user interaction and visible blockchain messages into wallet cryptography and data access.
+Walk through the protocol once from beginning to end. The reusable address is shared off-chain but never appears in the transaction. The sender derives a unique destination, and the receiver reconstructs it while scanning.
 
-No Bitcoin consensus change is required; this is an application-layer protocol using existing transaction data and Taproot outputs.
+The privacy benefit comes with heavier wallet engineering: senders need key derivation support and receivers need access to relevant blockchain data. No Bitcoin consensus change is required.
 
 ---
 
